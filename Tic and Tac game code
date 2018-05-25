@@ -1,0 +1,124 @@
+package com.example.shubham.animate5;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.GridLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    //private GameEngine gameEngine;
+
+
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        TextView tv=findViewById(R.id.textView);
+        tv.setVisibility(View.GONE);
+        Button btn=findViewById(R.id.button);
+        btn.setVisibility(View.GONE);
+
+
+
+    }
+    int []steps={0,0,0,0,0,0,0,0,0};
+    int i=0;
+
+    int [][]winnings={
+            {0,1,2},
+            {3,4,5},
+            {6,7,8},
+            {0,3,6},
+            {1,4,7},
+            {2,5,8},
+            {0,4,8},
+            {2,4,6}
+    };
+    int s;
+    public void tapIn(View view)
+    {
+     ImageView  counter=(ImageView)view;
+      s=Integer.parseInt(counter.getTag().toString());
+      i++;
+      if(steps[s]==0) {
+          counter.setTranslationY(-1000f);
+          if (i % 2 == 0) {
+              steps[s]=1;
+              counter.setImageResource(R.drawable.red);
+
+
+          } else {
+              steps[s]=2;
+              counter.setImageResource(R.drawable.yellow);
+
+
+          }
+          counter.animate().rotationBy(360).translationYBy(1000f).setDuration(500);
+      }
+      if(i>3)
+      {
+          for(int k=0;k<8;k++)
+          {
+              if(steps[winnings[k][0]]==steps[s] && steps[winnings[k][1]]==steps[s] && steps[winnings[k][2]]==steps[s])
+              {
+                  Toast.makeText(this, "winners:" + steps[s], Toast.LENGTH_SHORT).show();
+                  GridLayout gridLayout=findViewById(R.id.gridLayout);
+                  TextView tv=findViewById(R.id.textView);
+                  gridLayout.setVisibility(View.GONE);
+                  tv.setText("Winner:"+steps[s]);
+                  Button btn=findViewById(R.id.button);
+                  btn.setVisibility(View.VISIBLE);
+                  //tryAgain(View view);
+                  break;
+              }
+          }
+      }
+    }
+
+    public void tryAgain(View view)
+    {
+
+        GridLayout gridLayout=findViewById(R.id.gridLayout);
+        gridLayout.setVisibility(View.VISIBLE);
+        for(int j=steps[0];j<steps.length;j++)
+        {
+            steps[j]=0;
+        }
+        //tapIn();
+       // clearScreen(View view);
+        gridLayout.invalidate();
+
+        Button btn=findViewById(R.id.button);
+        btn.setVisibility(View.GONE);
+    }
+   // public void clearScreen(View view)
+  //  {
+       // ImageView iv1 =findViewById(R.id.imageView5);
+        //iv1.setImageResource(0);
+        //ImageView iv2=findViewById(R.id.imageView6);
+     //   iv2.setImageResource(0);
+      //  ImageView iv3=findViewById(R.id.imageView7);
+     //   iv3.setImageResource(0);
+      //  ImageView iv4 = findViewById(R.id.imageView8);
+    //    iv4.setImageResource(0);
+     //   ImageView iv5 = findViewById(R.id.imageView9);
+       // iv5.setImageResource(0);
+       // ImageView iv6 = findViewById(R.id.imageView10);
+     //   iv6.setImageResource(0);
+   //     ImageView iv7 = findViewById(R.id.imageView11);
+       // iv7.setImageResource(0);
+      //  ImageView iv8 = findViewById(R.id.imageView12);
+    //    iv8.setImageResource(0);
+  //      ImageView iv9 = findViewById(R.id.imageView13);
+//        iv9.setImageResource(0);
+
+
+
+    }
+
+
