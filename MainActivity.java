@@ -1,117 +1,103 @@
-package com.example.shubham.imgdownload;
+package com.example.shubham.jsonapp;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    int isOperatorPressed=0;
-    ImageDownloader task1,task2;
-    ImageView downloadImg;
+
+    private ArrayList<Temperature> weather= new ArrayList();
+    ListView listView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        downloadImg = findViewById(R.id.downloadImg);
-        //task = new ImageDownloader();
-
+        URL url = NetworkUtil.buildUrlForWeather();
+        new FetchWeatherDetails().execute(url);
+        listView =findViewById(R.id.lsView);
     }
-    public void downloadImage(View view)
-    {
 
-        Bitmap myImage;
 
-      //  Button b1 = findViewById(R.id.button);
-       // Button b2 = findViewById(R.id.button2);
-        //Button b3 = findViewById(R.id.button3);
-        //Button b4 = findViewById(R.id.button4);
-        try {
-            //downloadImg.setImageBitmap(null);
-            if(isOperatorPressed==0) {
-                Log.i("img","image0");
-                task1=new ImageDownloader();
-                myImage = task1.execute("https://media.gettyimages.com/photos/sachin-tendulkar-of-india-waves-to-fans-during-day-one-of-the-first-picture-id136109765?s=612x612").get();
 
-                downloadImg.setImageBitmap(myImage);
-                isOperatorPressed++;
-            }
-           else if(isOperatorPressed==1)
-            {
-                Log.i("img","image1");
-                task2=new ImageDownloader();
-                myImage = task2.execute("https://qph.fs.quoracdn.net/main-qimg-bec6682199424b319df0999c7bf1d530-c").get();
-                downloadImg.setImageBitmap(myImage);
-                Log.i("img","image end");
-                isOperatorPressed++;
-            }
-            else if (isOperatorPressed==2)
-            {
-                Log.i("img","image1");
-                task2=new ImageDownloader();
-                myImage = task2.execute("http://static.dnaindia.com/sites/default/files/styles/full/public/2018/04/24/675279-sachin-social.jpg").get();
-                downloadImg.setImageBitmap(myImage);
-                Log.i("img","image end");
-                isOperatorPressed=0;
-            }
+    private class FetchWeatherDetails extends AsyncTask<URL,Void,String> {
 
-           // myImage1 = task.execute("http://www.coer.ac.in/images/gallery/committee/connect.jpg").get();
-           //  downloadImg.setImageBitmap(myImage1);
-        }catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
-    }
-    public class ImageDownloader extends AsyncTask<String,Void,Bitmap>
-    {
         @Override
-        protected Bitmap doInBackground(String...urls)
-        {
-            try
-            {
-                URL url = new URL(urls[0]);
-                HttpURLConnection connection= (HttpURLConnection) url.openConnection();
-                connection.connect();
-                InputStream inputStream = connection.getInputStream();
-                Bitmap myBitmap = BitmapFactory.decodeStream(inputStream);
-                connection.disconnect();
-                return myBitmap;
-            }
-            catch (MalformedURLException e)
-            {
-                e.printStackTrace();
-
-            }catch(IOException e)
-            {
+        protected String doInBackground(URL... urls) {
+            URL url = urls[0];
+            String weatherSearchResult = null;
+            try{
+                weatherSearchResult = NetworkUtil.getResponseFromHttpUrl(url);
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-            return null;
-
-        }
-        protected void onProgressUpdate()
-        {
-            Log.i("async","progress update");
-        }
-        protected void onPostExecute(Bitmap result)
-        {
-            Log.i("async","post execute");
-        }
-        protected void onPreExecute()
-        {
-            Log.i("async","pre execute");
+            Log.i("BackGround",weatherSearchResult);
+            return weatherSearchResult;
         }
 
+        @Override
+        protected  void onPreExecute(){
+            super.onPreExecute();
 
+        }
+
+        @Override
+        protected void onPostExecute(String weatherSearchResult) {
+            if(weatherSearchResult!=null && !weatherSearchResult.equals("")){
+                weather = parseJSON(weatherSearchResult);
+               // weather =parseJSON(weatherSearchResult);
+            }
+            super.onPostExecute(weatherSearchResult);
+        }
+        private ArrayList<Temperature> parseJSON(String wString){
+            if(wString!=null){
+                weather.clear();
+            }
+            if(wString!=null) try {
+                JSONObject rootObject = new JSONObject(wString);
+                JSONArray results = rootObject.getJSONArray("DailyForecasts");
+                for (int i = 0; i < results.length(); i++) {
+                    Temperature temp = new Temperature();
+                    JSONObject resultObj = results.getJSONObject(i);
+                    String date = resultObj.getString("Date");
+                    temp.setDate(date);
+                    Log.i("date", date);
+
+                    JSONObject tempObj = resultObj.getJSONObject("Temperature");
+                    String minTemp = tempObj.getJSONObject("Minimum").getString("Value");
+                    String maxTemp = tempObj.getJSONObject("Maximum").getString("Value");
+                    Log.i("Temp", minTemp + "," + maxTemp);
+                    String Link = resultObj.getString("Link");
+
+                    temp.setMaxTemp(maxTemp);
+                    temp.setMinTemp(minTemp);
+                    temp.setLink(Link);
+
+                    weather.add(temp);
+
+                }
+                if (weather != null) {
+                    WeatherAdaptor weatherAdaptor = new WeatherAdaptor(getBaseContext(),weather);
+                    listView.setAdapter(weatherAdaptor);
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "Data Not Found", Toast.LENGTH_SHORT).show();
+                }
+
+                return weather;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return  null;
+        }
     }
 }
